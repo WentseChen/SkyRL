@@ -227,5 +227,8 @@ environment:
 
 model:
   model_name: ""
+  model_class: litellm_textbased
+  cost_tracking: ignore_errors
+  action_regex: "```bash\\s*\\n(.*?)\\n```"
   model_kwargs:
     drop_params: true

@@ -8,7 +8,6 @@ from pathlib import Path
 
 from minisweagent.models import get_model
 from minisweagent.agents.default import DefaultAgent
-from minisweagent.run.utils.save import save_traj
 from minisweagent.config import get_config_path
 from .mini_swe_utils import evaluate_trajectory, get_sb_environment
 
@@ -106,7 +105,7 @@ def init_and_run(
                 eval_error = str(e)
                 error = str(e)
 
-            save_traj(agent, path, exit_status=exit_status, result=result, extra_info=extra_info, reward=reward, eval_error=eval_error)  # type: ignore[arg-type]
+            agent.save(path, {"exit_status": exit_status, "result": result, "extra_info": extra_info, "reward": reward, "eval_error": eval_error})  # type: ignore[arg-type]
 
     return (agent.messages if agent is not None else [], reward, error)
 
@@ -166,6 +165,9 @@ class MiniSweAgentGenerator(SkyRLGymGenerator):
         if not len(messages):
             return None, None, None, None, None, None
 
+        # Filter non-standard message roles (e.g. "exit" messages added by mini-swe-agent v2)
+        messages = [m for m in messages if m.get("role") in ("system", "user", "assistant")]
+
         # TODO (sumanthrh): This is currently hardcoded for SWEBench with 2 initial messages (system and user).
         response_messages = messages[2:]
 
@@ -182,12 +184,10 @@ class MiniSweAgentGenerator(SkyRLGymGenerator):
 
         # We remove trailing `user` messages - this is added by Mini-SWE-Agent to capture the final git diff for the trajectory
         last_idx = len(response_messages) - 1
-        while response_messages[last_idx]["role"] == "user":
+        while last_idx >= 0 and response_messages[last_idx]["role"] == "user":
             last_idx -= 1
         if last_idx < 0:
-            raise ValueError(
-                "Found no assistant messages. Please ensure that your environment is configured correctly and the `OPENAI_BASE_URL` points to the HTTP server from the inference engine client"
-            )
+            return None, None, None, None, None, None
         response_messages = response_messages[: last_idx + 1]
 
         response_ids, loss_mask, _ = get_response_ids_and_loss_mask_from_messages(

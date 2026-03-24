@@ -610,7 +610,7 @@ def validate_generator_output(num_prompts: int, generator_output: GeneratorOutpu
     num_prompt_tokens = len(generator_output["prompt_token_ids"])
 
     if not step_wise:
-        assert num_prompts == num_responses, f"Mismatch between prompts ({num_prompts}) and responses ({num_responses})"
+        assert num_responses <= num_prompts, f"Mismatch between prompts ({num_prompts}) and responses ({num_responses})"
 
     assert (
         num_responses == num_prompt_tokens

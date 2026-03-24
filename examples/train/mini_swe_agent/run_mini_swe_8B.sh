@@ -6,6 +6,8 @@ set -x
 # bash examples/mini_swe_agent/run_mini_swe_8B.sh
 
 DATA_DIR="$HOME/data/swe_gym_subset"
+TRAIN_DATA="$DATA_DIR/train_cached.parquet"
+VAL_DATA="$DATA_DIR/val_small.parquet"
 CKPT_PATH="$HOME/ckpts/llm_mini_swe"
 
 # Save trajectories here for debugging
@@ -22,10 +24,10 @@ LOGGER=wandb
 # NOTE (sumanthrh): The `generator.max_turns` here is actually unused, and we use the `step_limit` from the `swebench.yaml` file. 
 # This simply has to be a value > 1
 uv run --isolated --extra fsdp --extra miniswe --env-file examples/train/mini_swe_agent/.env.miniswe -m examples.train.mini_swe_agent.main_mini_swe \
-  data.train_data="['$DATA_DIR/train.parquet']" \
-  data.val_data="['$DATA_DIR/validation.parquet']" \
+  data.train_data="['$TRAIN_DATA']" \
+  data.val_data="['$VAL_DATA']" \
   trainer.algorithm.advantage_estimator="grpo" \
-  trainer.policy.model.path="Qwen/Qwen3-8B" \
+  trainer.policy.model.path="Qwen/Qwen3.5-9B" \
   trainer.placement.colocate_all=true \
   trainer.strategy=fsdp2 \
   trainer.placement.policy_num_gpus_per_node=$NUM_GPUS \
@@ -37,7 +39,7 @@ uv run --isolated --extra fsdp --extra miniswe --env-file examples/train/mini_sw
   generator.inference_engine.tensor_parallel_size=$TP_SIZE \
   trainer.epochs=20 \
   trainer.eval_batch_size=50 \
-  trainer.eval_before_train=true \
+  trainer.eval_before_train=false \
   trainer.eval_interval=5 \
   trainer.update_epochs_per_batch=1 \
   trainer.train_batch_size=16 \
@@ -67,6 +69,6 @@ uv run --isolated --extra fsdp --extra miniswe --env-file examples/train/mini_sw
   trainer.run_name="mini_swe_8B_swe_gym" \
   trainer.resume_mode=null \
   trainer.ckpt_path="$CKPT_PATH" \
-  generator.miniswe_config_path="examples/mini_swe_agent/swebench.yaml" \
+  generator.miniswe_config_path="$HOME/SkyRL/examples/train/mini_swe_agent/swebench.yaml" \
   generator.miniswe_traj_dir=$MINISWE_TRAJ_DIR
   $@
