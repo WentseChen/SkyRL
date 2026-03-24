@@ -21,5 +21,6 @@ export PATH="$HOME/.local/bin:$PATH"
 source "$HOME/skyrl_venv/bin/activate"
 
 export WANDB_API_KEY=<your_wandb_api_key>
+export HF_TOKEN=<your_hf_token>
 export RAY_RUNTIME_ENV_HOOK=ray._private.runtime_env.uv_runtime_env_hook.hook
 export TORCH_NCCL_HEARTBEAT_TIMEOUT_SEC=100000

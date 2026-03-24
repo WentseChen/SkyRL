@@ -10,14 +10,14 @@ name = "skyrl"
 dynamic = ["version"]
 description = "Unified API for training and inference"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12"
 dependencies = [
     "datasets>=4.0.0",
     "pillow>=11.3.0",
     "rich>=14.1.0",
     "safetensors>=0.6.2",
     "tokenizers>=0.21.2",
-    "transformers>=4.56.1,<5",
+    "transformers>=4.56.1",
     "typer>=0.17.4",
     # "wandb>=0.22.0",
     "peft",
@@ -97,11 +97,11 @@ skyrl-train = [
 
 fsdp = [
     "skyrl[skyrl-train]",
-    "vllm==0.16.0; sys_platform == 'linux'",
+    "vllm==0.17.0; sys_platform == 'linux'",
     "flash-attn==2.8.3; sys_platform == 'linux'",
-    "torch==2.9.1; sys_platform == 'linux'",
-    "flashinfer-python==0.6.3; sys_platform == 'linux' and platform_machine == 'x86_64'",
-    "flashinfer-jit-cache==0.6.3; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "torch==2.10.0; sys_platform == 'linux'",
+    "flashinfer-python==0.6.4; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "flashinfer-jit-cache==0.6.4; sys_platform == 'linux' and platform_machine == 'x86_64'",
     "torchvision; sys_platform == 'linux'",
 ]
 
@@ -109,13 +109,13 @@ megatron = [
     "skyrl[skyrl-train]",
     "transformer-engine[pytorch]==2.10.0; sys_platform == 'linux'",
     "flash-attn==2.8.1; sys_platform == 'linux'",
-    "vllm==0.16.0; sys_platform == 'linux'",
-    "torch==2.9.1; sys_platform == 'linux'",
-    "flashinfer-python==0.6.3; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "vllm==0.17.0; sys_platform == 'linux'",
+    "torch==2.10.0; sys_platform == 'linux'",
+    "flashinfer-python==0.6.4; sys_platform == 'linux' and platform_machine == 'x86_64'",
     "torchvision; sys_platform == 'linux'",
     "megatron-bridge; sys_platform == 'linux'",
     "megatron-core==0.16.0; sys_platform == 'linux'",
-    "flashinfer-jit-cache==0.6.3; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "flashinfer-jit-cache==0.6.4; sys_platform == 'linux' and platform_machine == 'x86_64'",
     "nvidia-modelopt; sys_platform == 'linux'",
 ]
 
@@ -175,8 +175,9 @@ required-environments = [
 ]
 
 constraint-dependencies = [
-    "flashinfer-jit-cache==0.6.3",
+    "flashinfer-jit-cache==0.6.4",
 ]
+
 # each backend should have separate dependencies that can potentially clash
 # megatron also clashes with the jax dependency from gpu and tpu extras
 conflicts = [
@@ -209,6 +210,8 @@ override-dependencies = [
     "transformer-engine[pytorch]==2.10.0; sys_platform == 'linux'",
     "megatron-core==0.16.0; sys_platform == 'linux'",
     "ml_dtypes>=0.5.0; sys_platform == 'linux'",
+    "transformers @ git+https://github.com/huggingface/transformers.git",
+    "mistral-common>=1.10.0",
 ]
 
 [tool.uv.extra-build-dependencies]
