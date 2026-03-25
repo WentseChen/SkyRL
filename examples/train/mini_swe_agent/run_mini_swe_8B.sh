@@ -27,7 +27,7 @@ uv run --isolated --extra fsdp --extra miniswe --env-file examples/train/mini_sw
   data.train_data="['$TRAIN_DATA']" \
   data.val_data="['$VAL_DATA']" \
   trainer.algorithm.advantage_estimator="grpo" \
-  trainer.policy.model.path="Qwen/Qwen3.5-9B" \
+  trainer.policy.model.path="$HOME/models/Qwen3.5-9B-text" \
   trainer.placement.colocate_all=true \
   trainer.strategy=fsdp2 \
   trainer.placement.policy_num_gpus_per_node=$NUM_GPUS \
@@ -39,7 +39,7 @@ uv run --isolated --extra fsdp --extra miniswe --env-file examples/train/mini_sw
   generator.inference_engine.tensor_parallel_size=$TP_SIZE \
   trainer.epochs=20 \
   trainer.eval_batch_size=50 \
-  trainer.eval_before_train=false \
+  trainer.eval_before_train=true \
   trainer.eval_interval=5 \
   trainer.update_epochs_per_batch=1 \
   trainer.train_batch_size=16 \
@@ -66,7 +66,7 @@ uv run --isolated --extra fsdp --extra miniswe --env-file examples/train/mini_sw
   generator.inference_engine.gpu_memory_utilization=0.8 \
   trainer.logger="$LOGGER" \
   trainer.project_name="mini_swe" \
-  trainer.run_name="mini_swe_8B_swe_gym" \
+  trainer.run_name="mini_swe_9B_swe_gym" \
   trainer.resume_mode=null \
   trainer.ckpt_path="$CKPT_PATH" \
   generator.miniswe_config_path="$HOME/SkyRL/examples/train/mini_swe_agent/swebench.yaml" \

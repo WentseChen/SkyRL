@@ -58,6 +58,37 @@ def _patch_vllm_sleep_mode():
 
 _patch_vllm_sleep_mode()
 
+
+def _register_missing_archs():
+    """Register model architectures in vLLM's ModelRegistry for GPU worker subprocesses.
+
+    Qwen3_5ForConditionalGeneration is the architecture used by Qwen/Qwen3.5-9B-text.
+    vLLM 0.17 natively registers it to qwen3_5.py which has KV cache issues with the
+    hybrid linear+full attention model. We override it to TransformersForCausalLM which
+    handles the hybrid architecture correctly via HuggingFace's implementation.
+    """
+    try:
+        from vllm.model_executor.models import ModelRegistry
+
+        # Always override: vLLM 0.17's native Qwen3_5ForConditionalGeneration has KV
+        # cache page-size issues with the hybrid attention architecture.
+        # TransformersForCausalLM avoids this by using HF's implementation directly.
+        ModelRegistry.register_model(
+            "Qwen3_5ForConditionalGeneration",
+            "vllm.model_executor.models.transformers:TransformersForCausalLM",
+        )
+
+        if "Qwen3_5ForCausalLM" not in ModelRegistry.get_supported_archs():
+            ModelRegistry.register_model(
+                "Qwen3_5ForCausalLM",
+                "vllm.model_executor.models.qwen3_5:Qwen3_5ForCausalLM",
+            )
+    except Exception as e:
+        warnings.warn(f"Failed to register Qwen3_5 architectures: {e}")
+
+
+_register_missing_archs()
+
 # Path to this worker extension class for use in CLI args (derived from module path)
 VLLM_WORKER_EXTENSION_CLS = f"{__name__}.WorkerWrap"
 
@@ -129,6 +160,27 @@ class WorkerWrap:
         weight_list = []
         for name, tensor in self._weight_receiver.receive_weights(request):
             weight_list.append((name, tensor))
+
+        # Remap FSDP weight keys to match vLLM's model structure.
+        #
+        # FSDP uses AutoModelForCausalLM which loads Qwen3.5-9B as Qwen3_5ForCausalLM
+        # (text-only structure): model.embed_tokens.*, model.layers.*, lm_head.*
+        #
+        # vLLM uses TransformersForCausalLM wrapping Qwen3_5ForConditionalGeneration
+        # (VL structure): model.language_model.embed_tokens.*, model.lm_head.*
+        #
+        # Remap rules:
+        #   model.X  ->  model.language_model.X
+        #   lm_head.X  ->  model.lm_head.X
+        if weight_list and not weight_list[0][0].startswith("model.language_model."):
+            remapped = []
+            for name, tensor in weight_list:
+                if name.startswith("model."):
+                    name = "model.language_model." + name[len("model."):]
+                elif name.startswith("lm_head."):
+                    name = "model." + name
+                remapped.append((name, tensor))
+            weight_list = remapped
 
         self.model_runner.model.load_weights(weights=weight_list)
 

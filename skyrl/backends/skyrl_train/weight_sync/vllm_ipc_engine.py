@@ -182,19 +182,16 @@ def register_ipc_engine() -> None:
             "IPCWeightTransferEngine",
         )
 
-    # Register Qwen3.5 architectures using vLLM's generic transformers backend.
-    # Qwen3_5ForConditionalGeneration was added in transformers 5.x and is not
-    # natively supported in vLLM 0.16.0. TransformersForCausalLM is vLLM's
-    # generic HF-transformers fallback that works for any model transformers
-    # supports.
+    # Register Qwen3.5 architectures.
+    # - Qwen3_5ForConditionalGeneration: override to TransformersForCausalLM since the
+    #   native vLLM 0.17 class has KV cache page-size issues with the hybrid architecture.
+    # - Qwen3_5ForCausalLM/MoE: guard-registered for older vLLM builds.
     from vllm.model_executor.models import ModelRegistry
-    _unsupported_qwen35_archs = [
-        "Qwen3_5ForConditionalGeneration",
-        "Qwen3_5MoeForConditionalGeneration",
-    ]
-    for arch in _unsupported_qwen35_archs:
+    _qwen35_arch_map = {
+        "Qwen3_5ForCausalLM": "vllm.model_executor.models.qwen3_5:Qwen3_5ForCausalLM",
+        "Qwen3_5ForConditionalGeneration": "vllm.model_executor.models.transformers:TransformersForCausalLM",
+        "Qwen3_5MoeForConditionalGeneration": "vllm.model_executor.models.transformers:TransformersForCausalLM",
+    }
+    for arch, module_cls in _qwen35_arch_map.items():
         if arch not in ModelRegistry.get_supported_archs():
-            ModelRegistry.register_model(
-                arch,
-                "vllm.model_executor.models.transformers:TransformersForCausalLM",
-            )
+            ModelRegistry.register_model(arch, module_cls)
